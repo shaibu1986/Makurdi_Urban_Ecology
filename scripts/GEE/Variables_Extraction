@@ -1,0 +1,108 @@
+/**
+ * PROJECT: Makurdi Urban Environmental Filter Analysis
+ * PHASE: Data Acquisition & Geospatial Pre-processing
+ * -------------------------------------------------------------------------
+ * LEAD AUTHOR: Shaibu Ochoche (RUDN)
+ * * DESCRIPTION:
+ * This script serves as the primary data engine for the study. It performs:
+ * 1. Multi-band extraction from SoilGrids 2.0 (0-30cm mean depth).
+ * 2. Median composite generation for VIIRS Night-time Lights (2024).
+ * 3. Atmospheric correction and EVI calculation from Sentinel-2 SR data.
+ * 4. Systematic grid-based sampling (500m) for machine learning input.
+ * * TARGET REGION: Makurdi, Nigeria (Guinea-Savannah Zone)
+ * -------------------------------------------------------------------------
+ */
+
+// 1. Load ROI
+var roi = ee.FeatureCollection("projects/disaster-management-474719/assets/MAKURDI");
+Map.centerObject(roi, 11);
+
+// 2. Load ALL 8 SoilGrids Properties (Top 30cm)
+var getTop30 = function(assetPath, name, div) {
+  var img = ee.Image(assetPath).clip(roi);
+  var mean = img.select([0, 1, 2]) 
+                  .reduce(ee.Reducer.mean())
+                  .divide(div);
+  return mean.rename(name);
+};
+
+var cec = getTop30("projects/soilgrids-isric/cec_mean", 'cec', 10);
+var bd = getTop30("projects/soilgrids-isric/bdod_mean", 'bdod', 100);
+var ph = getTop30("projects/soilgrids-isric/phh2o_mean", 'phh2o', 10);
+var soc = getTop30("projects/soilgrids-isric/soc_mean", 'soc', 10);
+var nitrogen = getTop30("projects/soilgrids-isric/nitrogen_mean", 'nitrogen', 100); 
+var sand = getTop30("projects/soilgrids-isric/sand_mean", 'sand', 10); 
+var clay = getTop30("projects/soilgrids-isric/clay_mean", 'clay', 10);
+var silt = getTop30("projects/soilgrids-isric/silt_mean", 'silt', 10);
+
+// 3. Load NTL (2024)
+var ntl = ee.ImageCollection("NOAA/VIIRS/DNB/MONTHLY_V1/VCMCFG")
+  .filterDate('2024-01-01', '2024-12-31').median().select('avg_rad').clip(roi).rename('NTL');
+
+// 4. LOAD S2 & CALCULATE EVI (Memory Optimized)
+var s2 = ee.ImageCollection("COPERNICUS/S2_SR")
+  .filterBounds(roi)
+  .filterDate('2024-01-01', '2024-12-31')
+  .filter(ee.Filter.lt('CLOUDY_PIXEL_PERCENTAGE', 15))
+  .select(['B2', 'B4', 'B8']) // Pre-select bands to save memory
+  .mean().clip(roi).divide(10000); 
+
+var evi = s2.expression(
+    '2.5 * ((NIR - RED) / (NIR + 6 * RED - 7.5 * BLUE + 1))', {
+      'NIR': s2.select('B8'), 'RED': s2.select('B4'), 'BLUE': s2.select('B2')
+    }).rename('EVI');
+
+// 5. GRID CREATION
+var grid = roi.geometry().coveringGrid(ee.Projection('EPSG:4326'), 500);
+var filteredGrid = grid.filterBounds(roi);
+var gridOutline = ee.Image().paint(filteredGrid, 1, 1);
+
+// 6. FORCE-DISPLAY ALL LAYERS
+Map.addLayer(ntl, {min: 0, max: 15, palette: ['black', 'purple', 'yellow', 'white']}, '1. NTL');
+Map.addLayer(evi, {min: 0.1, max: 0.6, palette: ['white', 'yellow', 'green', 'darkgreen']}, '2. EVI');
+Map.addLayer(soc, {min: 5, max: 30, palette: ['white', 'bisque', 'saddlebrown', 'black']}, '3. SOC');
+Map.addLayer(nitrogen, {min: 0.5, max: 2.5, palette: ['white', 'lightcyan', 'darkblue']}, '4. Nitrogen');
+Map.addLayer(ph, {min: 5, max: 7.5, palette: ['red', 'orange', 'yellow', 'green']}, '5. pH');
+Map.addLayer(cec, {min: 5, max: 25, palette: ['white', 'plum', 'purple']}, '6. CEC');
+Map.addLayer(bd, {min: 1.2, max: 1.6, palette: ['blue', 'white', 'red']}, '7. Bulk Density');
+Map.addLayer(sand, {min: 30, max: 70, palette: ['white', 'gold', 'orange']}, '8. Sand %');
+Map.addLayer(clay, {min: 10, max: 40, palette: ['white', 'silver', 'grey']}, '9. Clay %');
+Map.addLayer(silt, {min: 10, max: 40, palette: ['white', 'khaki', 'darkkhaki']}, '10. Silt %');
+Map.addLayer(gridOutline, {palette: ['#FF0000']}, '11. SAMPLING GRID');
+
+// 7. BATCH EXPORTS
+var stack = ntl.addBands(evi).addBands(cec).addBands(bd).addBands(ph)
+               .addBands(soc).addBands(nitrogen).addBands(sand)
+               .addBands(silt).addBands(clay);
+
+// CSV Task
+Export.table.toDrive({
+  collection: stack.reduceRegions({
+    collection: filteredGrid,
+    reducer: ee.Reducer.mean(),
+    scale: 250
+  }),
+  description: 'Makurdi_Full_Suite_EVI_Data',
+  fileFormat: 'CSV',
+  selectors: ['NTL', 'EVI', 'cec', 'bdod', 'phh2o', 'soc', 'nitrogen', 'sand', 'silt', 'clay']
+});
+
+// GeoTIFF Task Loop
+var exportList = [
+  {img: ntl, name: 'NTL'}, {img: evi, name: 'EVI'},
+  {img: cec, name: 'CEC'}, {img: bd, name: 'BD'},
+  {img: ph, name: 'pH'}, {img: soc, name: 'SOC'},
+  {img: nitrogen, name: 'Nitrogen'}, {img: sand, name: 'Sand'},
+  {img: silt, name: 'Silt'}, {img: clay, name: 'Clay'}
+];
+
+exportList.forEach(function(item) {
+  Export.image.toDrive({
+    image: item.img,
+    description: 'Makurdi_' + item.name,
+    scale: 250,
+    region: roi.geometry(),
+    fileFormat: 'GeoTIFF',
+    maxPixels: 1e13
+  });
+});
