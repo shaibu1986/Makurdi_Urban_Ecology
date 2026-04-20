@@ -40,7 +40,7 @@ This step enables direct observation of the multi-sensor data fusion (Sentinel-2
 ### **Stage 2: Analytical Validation (Colab)**
 Once the data origin is verified, launch the master notebook using the badge below:
 
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/shaibu1986/Makurdi_Urban_Ecology/blob/main/scripts/Python/Makurdi_Urban_Environmental_Filter_Analysis.ipynb)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/shaibu1986/Makurdi_Urban_Ecology/blob/main/Makurdi_Urban_Environmental_Filter_Analysis.ipynb)
 
 **File Path:** `scripts/Python/Makurdi_Urban_Environmental_Filter_Analysis.ipynb`
 
