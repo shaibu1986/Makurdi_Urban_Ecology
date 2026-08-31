@@ -5,7 +5,7 @@ This repository contains the geospatial datasets, machine learning models, and a
 ## 👥 Authors
 * **Shaibu Ochoche** — Peoples' Friendship University of Russia (RUDN).
 * **Anatoly Aleksandrovich Kirichuk** — Peoples' Friendship University of Russia (RUDN).
-* **Emaikwu Patience Onyamoche** — Sechenov First Moscow State Medical University.
+
 
 ## 📝 Abstract
 Urbanization fundamentally alters the abiotic filters that govern vegetation health, yet the specific geochemical thresholds of these transitions remain poorly understood in tropical Guinea-Savannah cities. This study characterizes the environmental filtering process in Makurdi, Nigeria, by integrating satellite-derived anthropogenic and biological indices with high-resolution edaphic data. Utilizing a Random Forest regressor and Partial Dependence Modeling, we analyzed the hierarchical influence of urbanization intensity and eight soil biophysical properties on the Enhanced Vegetation Index (EVI). 
