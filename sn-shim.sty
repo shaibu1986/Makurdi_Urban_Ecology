@@ -1,0 +1,35 @@
+% sn-shim.sty -- LOCAL PREVIEW ONLY.
+% Lets main.tex compile with the standard article class when the official Springer Nature
+% class (sn-jnl.cls) is not installed. For submission, compile on Overleaf with the official
+% "Springer Nature LaTeX Template" (sn-jnl.cls, sn-basic.bst); this file is then ignored.
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{sn-shim}[2026/10/05 preview shim for sn-jnl markup]
+\RequirePackage[a4paper,margin=2.5cm]{geometry}
+\RequirePackage[T1]{fontenc}
+\IfFileExists{lmodern.sty}{\RequirePackage{lmodern}}{\RequirePackage{mathptmx}}
+\RequirePackage[authoryear,round]{natbib}
+\RequirePackage{graphicx,amsmath,booktabs,xcolor}
+\RequirePackage[hidelinks]{hyperref}
+\RequirePackage{setspace}\onehalfspacing
+\bibliographystyle{plainnat}
+\newcommand{\fnm}[1]{#1}\newcommand{\sur}[1]{#1}\newcommand{\spfx}[1]{#1}
+\newcommand{\orgdiv}[1]{#1}\newcommand{\orgname}[1]{#1}\newcommand{\orgaddress}[1]{#1}
+\newcommand{\street}[1]{#1}\newcommand{\city}[1]{#1}\newcommand{\postcode}[1]{#1}\newcommand{\state}[1]{#1}\newcommand{\country}[1]{#1}
+\def\@snemail{}\newcommand{\email}[1]{\ifx\@snemail\@empty\gdef\@snemail{\detokenize{#1}}\fi}
+\def\@snauthors{}\def\@snaffils{}
+\newcommand{\author@sn}[2][]{\g@addto@macro\@snauthors{#2$^{#1}$\quad}}
+\renewcommand{\author}{\@ifstar{\author@sn}{\author@sn}}
+\newcommand{\affil}{\@ifstar{\affil@sn}{\affil@sn}}
+\newcommand{\affil@sn}[2][]{\g@addto@macro\@snaffils{\par\noindent$^{#1}$#2}}
+\newcommand{\@snabstract}{}\renewcommand{\abstract}[1]{\gdef\@snabstract{#1}}
+\newcommand{\@snkeywords}{}\newcommand{\keywords}[1]{\gdef\@snkeywords{#1}}
+\let\@sntitle\@empty
+\let\orig@title\title
+\renewcommand{\title}[2][]{\gdef\@sntitle{#2}}
+\renewcommand{\maketitle}{%
+  \begin{center}{\LARGE\bfseries\@sntitle\par}\vskip 1em{\large\@snauthors\par}\end{center}
+  {\small\@snaffils\par\vskip .5em\noindent *Corresponding author: \@snemail\par}
+  \vskip 1em\noindent\textbf{Abstract}\par\noindent\@snabstract\par
+  \vskip .5em\noindent\textbf{Keywords:} \@snkeywords\par\vskip 1.5em}
+\newcommand{\bmhead}[1]{\paragraph*{#1}}
+\newcommand{\backmatter}{}

@@ -1,0 +1,13 @@
+%% Online Resource 1 (Electronic Supplementary Material)
+\documentclass[11pt]{article}
+\usepackage[a4paper,margin=2.5cm]{geometry}\usepackage[T1]{fontenc}\usepackage{mathptmx,graphicx,booktabs,amsmath,xurl}
+\begin{document}
+\noindent\textbf{Online Resource 1}\\[2pt]
+\textbf{Does urbanization filter vegetation through the soil? A spatially validated test with global soil maps in a West African floodplain city}\\[2pt]
+Ochoche Shaibu, Anatoly A.\ Kirichuk. \textit{Environmental Earth Sciences}. Corresponding author: shaibuochoche2014@gmail.com
+\section*{Fig. S1}
+\begin{center}\includegraphics[width=\textwidth]{figures/figS1_bivariate.png}\end{center}
+\noindent\textbf{Fig. S1} Bivariate response of EVI to urban intensity (NTL) and each SoilGrids property, with linear trends ($n=3{,}507$ grid cells of 500~m). The $p$ values treat cells as independent and are therefore nominal (see main text, Sect.~3.8, for the effective sample size).
+\section*{S2. Scan-order structure of the archived grid table}
+The archived table stores cells in Google Earth Engine \texttt{coveringGrid} order. The autocorrelation of nighttime radiance between consecutive rows was 0.971 and peaked again at a lag of 70 rows (0.919), the mean length of one east--west scan line; the analogous values for EVI were 0.808 and 0.504. Cells with EVI $<0.05$ (the Benue channel) all fell between rows 2,176 and 2,924 (about 11 scan lines). These properties justify the latitude-band validation and clustering used in the main text. The coordinate-based extension (\path{scripts/gee/makurdi_export_v2.js}) re-exports the same grid with centroid coordinates and verifies row-for-row identity with the archived table.
+\end{document}
